@@ -202,7 +202,23 @@ int pattern[COUNT_Y][COUNT_X] = {
     {0, 0, 0, 0, 0, 0, 2, 0, 0, 0 }
 };
 int meX, meY, oldX, oldY;
+typedef struct POS
+{
+    int x;
+    int y;
+}POS;
 
+void updatePosition(int pat[][10], POS *me)
+{
+    //for (int i = 0; i < COUNT_Y; i++)
+    //    for (int j = 0; j < COUNT_X; j++)
+    //        if (i == me.y && j == me.x)
+    //            pat[j][i] = 1;
+    pat[me->y][me->x] = 0;
+    me->y++;
+	pat[me->y][me->x] = 1;
+	return;
+}
 
 /**
  * \brief 
@@ -215,7 +231,7 @@ int meX, meY, oldX, oldY;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     unsigned int Cb, Cy, Ck;
-    int upKeywasPushed=0, downKeywasPushed = 0, leftKeywasPushed = 0, rightKeywasPushed = 0;
+    int spaceKeywasPushed = 0;
 
     if (DxLib_Init() == -1)        // ＤＸライブラリ初期化処理
     {
@@ -233,49 +249,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     double sizeX = (double)WINDOW_SIZE_X / COUNT_X;
     double sizeY = (double)WINDOW_SIZE_Y / COUNT_Y;
 
-    meX = 0; meY = 0;
-    oldX = meX; oldY = meY;
+    POS me = { 0,0 };
+    POS old = { me.x, me.y };
+    pattern[me.y][me.x] = 1;
+
 	while(1)
     {
         if (CheckHitKey(KEY_INPUT_ESCAPE)) // ESCキーで抜ける
             break;
 
-		oldX = meX; oldY = meY;
-        int isUpkeyPushed = CheckHitKey(KEY_INPUT_UP);
-        int isDownkeyPushed = CheckHitKey(KEY_INPUT_DOWN);
-        int isLeftkeyPushed = CheckHitKey(KEY_INPUT_LEFT);
-        int isRightkeyPushed = CheckHitKey(KEY_INPUT_RIGHT);
+        old = me;
 
-		if (isUpkeyPushed && !upKeywasPushed) // カーソルキーの操作で座標を変更する
-			meY = meY > 0 ? meY - 1 : 0;
-		if (isDownkeyPushed && !downKeywasPushed) // カーソルキーの操作で座標を変更する
-            meY = meY < (COUNT_Y - 1) ? meY + 1 : COUNT_Y - 1;
-        if (isLeftkeyPushed && !leftKeywasPushed) // カーソルキーの操作で座標を変更する
-            meX = meX > 0 ? meX - 1 : 0;
-        if (isRightkeyPushed && !rightKeywasPushed) // カーソルキーの操作で座標を変更する
-            meX = meX < (COUNT_X - 1) ? meX + 1 : COUNT_X - 1;
+		int isSpacekeyPushed = CheckHitKey(KEY_INPUT_SPACE);
 
-        upKeywasPushed = isUpkeyPushed;
-        downKeywasPushed = isDownkeyPushed;
-        leftKeywasPushed = isLeftkeyPushed;
-        rightKeywasPushed = isRightkeyPushed;
-
-        if (pattern[meY][meX] != 0) // 通路でない時（壁の時）移動した座標を元に戻す
-        {
-            meX = oldX;
-            meY = oldY;
-        }
-        else
-        {
-            pattern[oldY][oldX] = 0; // 通路であればパターンを更新する
-            pattern[meY][meX] = 1;
-        }
+		if (isSpacekeyPushed && !spaceKeywasPushed) // スペースキーを押した瞬間
+		{
+            updatePosition(pattern, &me);
+		}
+        spaceKeywasPushed = isSpacekeyPushed;
 
         // 円を描画
         for (int j = 0; j < COUNT_Y; j++)
         {
-            int y1 = sizeY * j;
-            int y2 = y1 + sizeY;
+            int y1 = (int)sizeY * j;
+            int y2 = (int)y1 + sizeY;
 
             for (int i = 0; i < COUNT_X; i++)
             {
