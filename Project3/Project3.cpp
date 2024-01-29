@@ -189,6 +189,12 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 #define COUNT_X 10 // x方向に🔲を並べる数
 #define COUNT_Y 10 // y方向に🔲を並べる数
 
+#define WALL 2 //　壁
+#define CLEAR 0 //　通路（通行可能）
+#define ME 1 // 通路（自分がいる場所）
+#define COMING 3 //　通路（今通ってきた）
+#define AVOID 4 // 通路（その先が行き止まり）
+
 int pattern[COUNT_Y][COUNT_X] = {
     {0, 0, 0, 2, 2, 0, 0, 0, 0, 0 },
     {0, 2, 2, 0, 2, 0, 0, 2, 2, 0 },
@@ -208,6 +214,7 @@ typedef struct POS
     int y;
 }POS;
 
+<<<<<<< HEAD
 void updatePosition(int pat[][10], POS *me, POS *old)
 {
     //for (int i = 0; i < COUNT_Y; i++)
@@ -222,6 +229,62 @@ void updatePosition(int pat[][10], POS *me, POS *old)
         me->y = old->y;
     }
         pat[me->y][me->x] = 1;
+=======
+// 四方の情報を持つ構造体
+typedef struct DIR
+{
+    int left, up, right, down;
+}DIR;
+
+// ウィンドウ範囲をチェックする（範囲内：１、範囲外：０）
+int checkBound(int x, int y)
+{
+    return x >= 0 && x < COUNT_X && y >= 0 && y < COUNT_Y ? 1 : 0;
+}
+
+// 四方の進行可能な方向を返す
+DIR checkDirection(int pat[][10], POS p)
+{
+    DIR d;
+    if (checkBound(p.x - 1, p.y) && pat[p.y][p.x - 1] == 0)
+        d.left = 1;
+    else
+        d.left = 0;
+    if (checkBound(p.x + 1, p.y) && pat[p.y][p.x + 1] == 0)
+        d.right = 1;
+    else
+        d.right = 0;
+    if (checkBound(p.x, p.y - 1) && pat[p.y - 1][p.x] == 0)
+        d.up = 1;
+    else
+        d.up = 0;
+    if (checkBound(p.x, p.y + 1) && pat[p.y + 1][p.x] == 0)
+        d.down = 1;
+    else
+        d.down = 0;
+
+    return d;
+}
+
+// 自分の位置を更新する
+void updatePosition(int pat[][10], POS *me)
+{
+    POS oldPos = *me;
+
+    DIR d = checkDirection(pat, *me);
+    pat[me->y][me->x] = 3;
+
+	if (d.down)
+        me->y++;
+    else if (d.right)
+        me->x++;
+    else if (d.up)
+        me->y--;
+    else if (d.left)
+        me->x--;
+
+	pat[me->y][me->x] = 1;
+>>>>>>> origin/test
 	return;
 }
 
@@ -236,7 +299,7 @@ void updatePosition(int pat[][10], POS *me, POS *old)
  */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    unsigned int Cb, Cy, Ck;
+    unsigned int Cb, Cb2, Cy, Ck;
     int spaceKeywasPushed = 0;
 
     if (DxLib_Init() == -1)        // ＤＸライブラリ初期化処理
@@ -249,6 +312,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     SetMouseDispFlag(TRUE);
 
     Cb = GetColor(0, 0, 255);
+    Cb2 = GetColor(0, 0, 55);
     Cy = GetColor(255, 255, 0);
     Ck = GetColor(0, 0, 0);
 
@@ -287,8 +351,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 int x2 = x1 + (int)sizeX;
                 if(pattern[j][i] ==0)
 	            	DrawBox(x1, y1, x2, y2, Cb, FALSE); // 通路
-                else if(pattern[j][i] == 2)
+                else if (pattern[j][i] == 2)
                     DrawBox(x1, y1, x2, y2, Cb, TRUE); // 壁
+                else if (pattern[j][i] == COMING)
+                    DrawBox(x1, y1, x2, y2, Cb2, TRUE); // 通ってきた道
 
                 if (pattern[j][i]==1) // 自分がいる場所
                     DrawCircle((x1 + x2) / 2, (y1 + y2) / 2, sizeX / 2 - 2, Cy, TRUE);
