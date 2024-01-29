@@ -208,17 +208,23 @@ typedef struct POS
     int y;
 }POS;
 
-void updatePosition(int pat[][10], POS *me)
+void updatePosition(int pat[][10], POS *me, POS *old)
 {
     //for (int i = 0; i < COUNT_Y; i++)
     //    for (int j = 0; j < COUNT_X; j++)
     //        if (i == me.y && j == me.x)
     //            pat[j][i] = 1;
+    int dead_end;
     pat[me->y][me->x] = 0;
     me->y++;
-	pat[me->y][me->x] = 1;
+    if (pat[me->y][me->x] == 2) {
+        me->x = old->x;
+        me->y = old->y;
+    }
+        pat[me->y][me->x] = 1;
 	return;
 }
+
 
 /**
  * \brief 
@@ -264,7 +270,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		if (isSpacekeyPushed && !spaceKeywasPushed) // スペースキーを押した瞬間
 		{
-            updatePosition(pattern, &me);
+            updatePosition(pattern, &me, &old);
+
 		}
         spaceKeywasPushed = isSpacekeyPushed;
 
