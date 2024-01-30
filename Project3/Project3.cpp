@@ -214,22 +214,7 @@ typedef struct POS
     int y;
 }POS;
 
-<<<<<<< HEAD
-void updatePosition(int pat[][10], POS *me, POS *old)
-{
-    //for (int i = 0; i < COUNT_Y; i++)
-    //    for (int j = 0; j < COUNT_X; j++)
-    //        if (i == me.y && j == me.x)
-    //            pat[j][i] = 1;
-    int dead_end;
-    pat[me->y][me->x] = 0;
-    me->y++;
-    if (pat[me->y][me->x] == 2) {
-        me->x = old->x;
-        me->y = old->y;
-    }
-        pat[me->y][me->x] = 1;
-=======
+
 // 四方の情報を持つ構造体
 typedef struct DIR
 {
@@ -242,27 +227,40 @@ int checkBound(int x, int y)
     return x >= 0 && x < COUNT_X && y >= 0 && y < COUNT_Y ? 1 : 0;
 }
 
+int count_deadend = 0;
+
 // 四方の進行可能な方向を返す
 DIR checkDirection(int pat[][10], POS p)
 {
     DIR d;
-    if (checkBound(p.x - 1, p.y) && pat[p.y][p.x - 1] == 0)
-        d.left = 1;
-    else
+    if ((checkBound(p.x - 1, p.y) && pat[p.y][p.x - 1] == 0) || count_deadend >= 3) {
+        d.left = 1;      
+    }   
+    else {
         d.left = 0;
-    if (checkBound(p.x + 1, p.y) && pat[p.y][p.x + 1] == 0)
-        d.right = 1;
-    else
+        count_deadend++;
+    }
+    if ((checkBound(p.x + 1, p.y) && pat[p.y][p.x + 1] == 0) || count_deadend >= 3) {
+        d.right = 1;       
+    }       
+    else {
         d.right = 0;
-    if (checkBound(p.x, p.y - 1) && pat[p.y - 1][p.x] == 0)
-        d.up = 1;
-    else
+        count_deadend++;
+    }
+    if ((checkBound(p.x, p.y - 1) && pat[p.y - 1][p.x] == 0) || count_deadend >= 3) {
+        d.up = 1;       
+    }        
+    else {
         d.up = 0;
-    if (checkBound(p.x, p.y + 1) && pat[p.y + 1][p.x] == 0)
-        d.down = 1;
-    else
+        count_deadend++;
+    }
+    if ((checkBound(p.x, p.y + 1) && pat[p.y + 1][p.x] == 0) || count_deadend >= 3) {
+        d.down = 1;       
+    }        
+    else{
         d.down = 0;
-
+        count_deadend++;
+    }
     return d;
 }
 
@@ -284,7 +282,6 @@ void updatePosition(int pat[][10], POS *me)
         me->x--;
 
 	pat[me->y][me->x] = 1;
->>>>>>> origin/test
 	return;
 }
 
@@ -334,7 +331,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		if (isSpacekeyPushed && !spaceKeywasPushed) // スペースキーを押した瞬間
 		{
-            updatePosition(pattern, &me, &old);
+            updatePosition(pattern, &me);
 
 		}
         spaceKeywasPushed = isSpacekeyPushed;
