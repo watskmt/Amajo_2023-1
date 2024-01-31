@@ -197,18 +197,6 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 #define AVOID 4 // 通路（その先が行き止まり）
 
 int pattern[COUNT_Y][COUNT_X] = {
-<<<<<<< HEAD
-    {0, 0, 0, 2, 2, 0, 0, 0, 0, 0 },
-    {0, 2, 2, 0, 2, 0, 0, 2, 2, 0 },
-    {0, 2, 0, 0, 2, 0, 0, 0, 0, 0 },
-    {0, 0, 0, 2, 2, 2, 2, 2, 2, 0 },
-    {2, 2, 0, 0, 0, 0, 0, 2, 0, 0 },
-    {0, 2, 2, 0, 2, 2, 2, 0, 0, 0 },
-    {0, 2, 0, 0, 0, 2, 0, 0, 2, 2 },
-    {0, 0, 0, 2, 0, 2, 2, 0, 2, 0 },
-    {0, 2, 0, 0, 0, 0, 2, 0, 0, 0 },
-    {0, 0, 0, 2, 2, 0, 0, 0, 2, 0 }
-=======
     {0, 2, 0, 0, 0, 0, 0, 0, 2, 0 },
     {0, 2, 0, 2, 0, 2, 2, 2, 2, 0 },
     {0, 2, 0, 2, 0, 2, 2, 2, 2, 0 },
@@ -219,7 +207,6 @@ int pattern[COUNT_Y][COUNT_X] = {
     {0, 2, 0, 2, 0, 2, 0, 2, 2, 0 },
     {0, 2, 0, 2, 2, 2, 0, 0, 2, 0 },
     {0, 2, 0, 0, 0, 2, 2, 0, 2, 0 }
->>>>>>> origin/test
 };
 int meX, meY, oldX, oldY;
 typedef struct POS
@@ -247,28 +234,28 @@ int count_deadend = 0;
 DIR checkDirection(int pat[][10], POS p)
 {
     DIR d;
-    if ((checkBound(p.x - 1, p.y) && pat[p.y][p.x - 1] == 0) || count_deadend >= 3) {
+    if (checkBound(p.x - 1, p.y) && pat[p.y][p.x - 1] == 0) {
         d.left = 1;      
     }   
     else {
         d.left = 0;
         count_deadend++;
     }
-    if ((checkBound(p.x + 1, p.y) && pat[p.y][p.x + 1] == 0) || count_deadend >= 3) {
+    if (checkBound(p.x + 1, p.y) && pat[p.y][p.x + 1] == 0) {
         d.right = 1;       
     }       
     else {
         d.right = 0;
         count_deadend++;
     }
-    if ((checkBound(p.x, p.y - 1) && pat[p.y - 1][p.x] == 0) || count_deadend >= 3) {
+    if (checkBound(p.x, p.y - 1) && pat[p.y - 1][p.x] == 0) {
         d.up = 1;       
     }        
     else {
         d.up = 0;
         count_deadend++;
     }
-    if ((checkBound(p.x, p.y + 1) && pat[p.y + 1][p.x] == 0) || count_deadend >= 3) {
+    if (checkBound(p.x, p.y + 1) && pat[p.y + 1][p.x] == 0) {
         d.down = 1;       
     }        
     else{
@@ -299,9 +286,7 @@ void updatePosition(int pat[][10], POS *me)
 	return;
 }
 
-<<<<<<< HEAD
 
-=======
 //マップをランダムに生成
 void generateRandomMap(int pat[][COUNT_X])
 {
@@ -323,7 +308,6 @@ void generateRandomMap(int pat[][COUNT_X])
 	pat[0][0] = 0;
     pat[COUNT_Y - 1][COUNT_X - 1] = 0;
 }
->>>>>>> origin/test
 /**
  * \brief 
  * \param hInstance 
