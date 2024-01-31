@@ -5,6 +5,7 @@
 #include "Project3.h"
 
 #include <cmath>
+#include <ctime>
 
 #define MAX_LOADSTRING 100
 
@@ -196,6 +197,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 #define AVOID 4 // 通路（その先が行き止まり）
 
 int pattern[COUNT_Y][COUNT_X] = {
+<<<<<<< HEAD
     {0, 0, 0, 2, 2, 0, 0, 0, 0, 0 },
     {0, 2, 2, 0, 2, 0, 0, 2, 2, 0 },
     {0, 2, 0, 0, 2, 0, 0, 0, 0, 0 },
@@ -206,6 +208,18 @@ int pattern[COUNT_Y][COUNT_X] = {
     {0, 0, 0, 2, 0, 2, 2, 0, 2, 0 },
     {0, 2, 0, 0, 0, 0, 2, 0, 0, 0 },
     {0, 0, 0, 2, 2, 0, 0, 0, 2, 0 }
+=======
+    {0, 2, 0, 0, 0, 0, 0, 0, 2, 0 },
+    {0, 2, 0, 2, 0, 2, 2, 2, 2, 0 },
+    {0, 2, 0, 2, 0, 2, 2, 2, 2, 0 },
+    {0, 2, 0, 2, 0, 2, 0, 0, 0, 0 },
+    {0, 0, 0, 2, 0, 0, 0, 2, 2, 0 },
+    {0, 2, 0, 2, 0, 2, 0, 2, 2, 0 },
+    {0, 2, 0, 2, 0, 2, 0, 2, 2, 0 },
+    {0, 2, 0, 2, 0, 2, 0, 2, 2, 0 },
+    {0, 2, 0, 2, 2, 2, 0, 0, 2, 0 },
+    {0, 2, 0, 0, 0, 2, 2, 0, 2, 0 }
+>>>>>>> origin/test
 };
 int meX, meY, oldX, oldY;
 typedef struct POS
@@ -285,7 +299,31 @@ void updatePosition(int pat[][10], POS *me)
 	return;
 }
 
+<<<<<<< HEAD
 
+=======
+//マップをランダムに生成
+void generateRandomMap(int pat[][COUNT_X])
+{
+    time_t t;
+    time(&t);
+    SRand((int)t);
+    for(int i=0; i<COUNT_X; i++)
+        for(int j=0; j<COUNT_Y; j++)
+        {
+            // 10000までの乱数を発生し、10で割った余りが3以下の時は壁、
+            // それより大きいときは通路に設定する
+            if (GetRand(10000) % 10 <= 3)
+                pat[i][j] = WALL;
+            else
+                pat[i][j] = CLEAR;
+        }
+
+    //スタート地点とゴール地点は必ず通路に設定する。
+	pat[0][0] = 0;
+    pat[COUNT_Y - 1][COUNT_X - 1] = 0;
+}
+>>>>>>> origin/test
 /**
  * \brief 
  * \param hInstance 
@@ -318,6 +356,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     POS me = { 0,0 };
     POS old = { me.x, me.y };
+    generateRandomMap(pattern);
     pattern[me.y][me.x] = 1;
 
 	while(1)
