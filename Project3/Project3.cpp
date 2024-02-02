@@ -264,16 +264,35 @@ DIR checkDirection(int pat[][10], POS p)
     }
     return d;
 }
+int returnToBranch(int pat[][10], POS *me)
+{
+    int x = me->x;
+    int y = me->y;
+    int r = 1;
+    if (checkBound(x, y - 1) && pat[y - 1][x] == COMING)
+        me->y--;
+    else if (checkBound(x + 1, y) && pat[y][x + 1] == COMING)
+        me->x++;
+    else if (checkBound(x, y + 1) && pat[y + 1][x] == COMING)
+        me->y++;
+    else if (checkBound(x - 1, y) && pat[y][x - 1] == COMING)
+        me->x--;
+    else
+        r = 0;
+    pat[y][x] = AVOID;
+
+    return r;
+}
 
 // 自分の位置を更新する
 void updatePosition(int pat[][10], POS *me)
 {
     POS oldPos = *me;
 
-    DIR d = checkDirection(pat, *me);
+        DIR d = checkDirection(pat, *me);
     pat[me->y][me->x] = 3;
 
-	if (d.down)
+    if (d.down)
         me->y++;
     else if (d.right)
         me->x++;
@@ -281,6 +300,8 @@ void updatePosition(int pat[][10], POS *me)
         me->y--;
     else if (d.left)
         me->x--;
+    else
+        returnToBranch(pat, me);
 
 	pat[me->y][me->x] = 1;
 	return;
@@ -318,7 +339,7 @@ void generateRandomMap(int pat[][COUNT_X])
  */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    unsigned int Cb, Cb2, Cy, Ck;
+    unsigned int Cb, Cb2, Cy, Ck, Cr2;
     int spaceKeywasPushed = 0;
 
     if (DxLib_Init() == -1)        // ＤＸライブラリ初期化処理
@@ -332,6 +353,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     Cb = GetColor(0, 0, 255);
     Cb2 = GetColor(0, 0, 55);
+    Cr2 = GetColor(55, 0, 0);
     Cy = GetColor(255, 255, 0);
     Ck = GetColor(0, 0, 0);
 
@@ -375,6 +397,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     DrawBox(x1, y1, x2, y2, Cb, TRUE); // 壁
                 else if (pattern[j][i] == COMING)
                     DrawBox(x1, y1, x2, y2, Cb2, TRUE); // 通ってきた道
+                else if (pattern[j][i] == AVOID)
+                    DrawBox(x1, y1, x2, y2, Cr2, TRUE); // 行きどまりの道
 
                 if (pattern[j][i]==1) // 自分がいる場所
                     DrawCircle((x1 + x2) / 2, (y1 + y2) / 2, sizeX / 2 - 2, Cy, TRUE);
@@ -384,7 +408,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
         //Sleep(10);
         ProcessMessage();
+        if (me.x == COUNT_X - 1 && me.y == COUNT_Y - 1)
+            break;
     }
+    WaitKey();
 
     DxLib_End();            // ＤＸライブラリ使用の終了処理
 
