@@ -221,6 +221,12 @@ typedef struct DIR
     int left, up, right, down;
 }DIR;
 
+typedef struct ROUTE
+{
+    POS p;
+    POS* next;
+}ROUTE;
+
 // ウィンドウ範囲をチェックする（範囲内：１、範囲外：０）
 int checkBound(int x, int y)
 {
@@ -250,47 +256,57 @@ DIR checkDirection(int pat[][10], POS p)
 
     return d;
 }
-int returnToBranch(int pat[][10], POS *me)
+int returnToBranch(int pat[][10], POS *me, POS *route, int *routeCount)
 {
-    int x = me->x;
-    int y = me->y;
-    int r = 1;
-    if (checkBound(x, y - 1) && pat[y - 1][x] == COMING)
-        me->y--;
-    else if (checkBound(x + 1, y) && pat[y][x + 1] == COMING)
-        me->x++;
-    else if (checkBound(x, y + 1) && pat[y + 1][x] == COMING)
-        me->y++;
-    else if (checkBound(x - 1, y) && pat[y][x - 1] == COMING)
-        me->x--;
-    else
-        r = 0;
-    pat[y][x] = AVOID;
+    if (*routeCount == 1)
+        return 0;
 
-    return r;
+    POS pos = route[*routeCount - 2];
+    POS initPos = { -1, -1 };
+    route[*routeCount-1] = initPos;
+    (*routeCount)--;
+
+    pat[me->y][me->x] = AVOID;
+	*me = pos;
+    pat[me->y][me->x] = ME;
+
+	return 1;
 }
 
 // 自分の位置を更新する
-void updatePosition(int pat[][10], POS *me)
+int updatePosition(int pat[][10], POS *me, POS *route, int* routeCount)
 {
+       int returnValue = 1;
     POS oldPos = *me;
 
-        DIR d = checkDirection(pat, *me);
-    pat[me->y][me->x] = 3;
+	DIR d = checkDirection(pat, *me);
+    pat[me->y][me->x] = COMING;
 
     if (d.down)
+    {
         me->y++;
+        route[(*routeCount)++] = *me;
+    }
     else if (d.right)
+    {
         me->x++;
+        route[(*routeCount)++] = *me;
+    }
     else if (d.up)
+    {
         me->y--;
+        route[(*routeCount)++] = *me;
+    }
     else if (d.left)
+    {
         me->x--;
+        route[(*routeCount)++] = *me;
+    }
     else
-        returnToBranch(pat, me);
+        returnValue=returnToBranch(pat, me, route, routeCount);
 
-	pat[me->y][me->x] = 1;
-	return;
+	pat[me->y][me->x] = ME;
+	return returnValue;
 }
 
 //マップをランダムに生成
@@ -326,6 +342,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
     unsigned int Cb, Cb2, Cy, Ck, Cr2;
     int spaceKeywasPushed = 0;
+    POS route[COUNT_X * COUNT_Y]; // routeには、通ってきた道の座標をPOSで入れていく
+									// 戻るときには、配列の一つ前のPOSを取得してそこに戻る　　
+    POS initPos = { -1, -1 }; // routeは(-1,-1)の座標で初期化しておく
+    for (int i = 0; i < COUNT_X * COUNT_Y; i++)
+        route[i] = initPos;
+    int routeCount = 0;
 
     if (DxLib_Init() == -1)        // ＤＸライブラリ初期化処理
     {
@@ -345,56 +367,61 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     double sizeX = (double)WINDOW_SIZE_X / COUNT_X;
     double sizeY = (double)WINDOW_SIZE_Y / COUNT_Y;
 
-    POS me = { 0,0 };
-    POS old = { me.x, me.y };
-    generateRandomMap(pattern);
-    pattern[me.y][me.x] = 1;
+    while (1) {
+        POS me = { 0,0 };
+        POS old = { me.x, me.y };
+        route[routeCount++] = me; // routeに自分の初期座標を設定し、カウントを一つ増やす
+        generateRandomMap(pattern);
+        pattern[me.y][me.x] = 1;
 
-	while(1)
-    {
-        if (CheckHitKey(KEY_INPUT_ESCAPE)) // ESCキーで抜ける
-            break;
-
-        old = me;
-
-		int isSpacekeyPushed = CheckHitKey(KEY_INPUT_SPACE);
-
-		if (isSpacekeyPushed && !spaceKeywasPushed) // スペースキーを押した瞬間
-		{
-            updatePosition(pattern, &me);
-		}
-        spaceKeywasPushed = isSpacekeyPushed;
-
-        // 円を描画
-        for (int j = 0; j < COUNT_Y; j++)
+        while (1)
         {
-            int y1 = (int)sizeY * j;
-            int y2 = (int)y1 + sizeY;
+            if (CheckHitKey(KEY_INPUT_ESCAPE)) // ESCキーで抜ける
+                goto end;
 
-            for (int i = 0; i < COUNT_X; i++)
+            old = me;
+
+            int isSpacekeyPushed = CheckHitKey(KEY_INPUT_SPACE);
+
+            if (isSpacekeyPushed && !spaceKeywasPushed) // スペースキーを押した瞬間
             {
-                int x1 = (int)sizeX * i;
-                int x2 = x1 + (int)sizeX;
-                if(pattern[j][i] ==0)
-	            	DrawBox(x1, y1, x2, y2, Cb, FALSE); // 通路
-                else if (pattern[j][i] == 2)
-                    DrawBox(x1, y1, x2, y2, Cb, TRUE); // 壁
-                else if (pattern[j][i] == COMING)
-                    DrawBox(x1, y1, x2, y2, Cb2, TRUE); // 通ってきた道
-                else if (pattern[j][i] == AVOID)
-                    DrawBox(x1, y1, x2, y2, Cr2, TRUE); // 行きどまりの道
-
-                if (pattern[j][i]==1) // 自分がいる場所
-                    DrawCircle((x1 + x2) / 2, (y1 + y2) / 2, sizeX / 2 - 2, Cy, TRUE);
-                else if(pattern[j][i] == 0) // 自分がいない場所
-	                DrawCircle((x1 + x2) / 2, (y1 + y2) / 2, sizeX / 2 - 2, Ck, TRUE);
+                if(updatePosition(pattern, &me, route, &routeCount) == 0)
+                    break;
             }
+            spaceKeywasPushed = isSpacekeyPushed;
+
+            // 円を描画
+            for (int j = 0; j < COUNT_Y; j++)
+            {
+                int y1 = (int)sizeY * j;
+                int y2 = (int)y1 + sizeY;
+
+                for (int i = 0; i < COUNT_X; i++)
+                {
+                    int x1 = (int)sizeX * i;
+                    int x2 = x1 + (int)sizeX;
+                    if (pattern[j][i] == 0)
+                        DrawBox(x1, y1, x2, y2, Cb, FALSE); // 通路
+                    else if (pattern[j][i] == 2)
+                        DrawBox(x1, y1, x2, y2, Cb, TRUE); // 壁
+                    else if (pattern[j][i] == COMING)
+                        DrawBox(x1, y1, x2, y2, Cb2, TRUE); // 通ってきた道
+                    else if (pattern[j][i] == AVOID)
+                        DrawBox(x1, y1, x2, y2, Cr2, TRUE); // 行きどまりの道
+
+                    if (pattern[j][i] == 1) // 自分がいる場所
+                        DrawCircle((x1 + x2) / 2, (y1 + y2) / 2, sizeX / 2 - 2, Cy, TRUE);
+                    else if (pattern[j][i] == 0) // 自分がいない場所
+                        DrawCircle((x1 + x2) / 2, (y1 + y2) / 2, sizeX / 2 - 2, Ck, TRUE);
+                }
+            }
+            //Sleep(10);
+            ProcessMessage();
+            if (me.x == COUNT_X - 1 && me.y == COUNT_Y - 1)
+                break;
         }
-        //Sleep(10);
-        ProcessMessage();
-        if (me.x == COUNT_X - 1 && me.y == COUNT_Y - 1)
-            break;
     }
+    end:
     WaitKey();
 
     DxLib_End();            // ＤＸライブラリ使用の終了処理
