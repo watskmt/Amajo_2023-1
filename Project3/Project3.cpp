@@ -184,11 +184,11 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 #include <windows.h>
 #include "DxLib.h"
-#define WINDOW_SIZE_X 400 // x方向のウィンドウサイズ 
-#define WINDOW_SIZE_Y 400 // y方向のウィンドウサイズ
+#define WINDOW_SIZE_X 800 // x方向のウィンドウサイズ 
+#define WINDOW_SIZE_Y 800 // y方向のウィンドウサイズ
 
-#define COUNT_X 10 // x方向に🔲を並べる数
-#define COUNT_Y 10 // y方向に🔲を並べる数
+#define COUNT_X 100 // x方向に🔲を並べる数
+#define COUNT_Y 100 // y方向に🔲を並べる数
 
 #define WALL 2 //　壁
 #define CLEAR 0 //　通路（通行可能）
@@ -234,7 +234,7 @@ int checkBound(int x, int y)
 }
 
 // 四方の進行可能な方向を返す
-DIR checkDirection(int pat[][10], POS p)
+DIR checkDirection(int pat[][COUNT_X], POS p)
 {
     DIR d;
     if (checkBound(p.x - 1, p.y) && pat[p.y][p.x - 1] == 0)
@@ -256,7 +256,7 @@ DIR checkDirection(int pat[][10], POS p)
 
     return d;
 }
-int returnToBranch(int pat[][10], POS *me, POS *route, int *routeCount)
+int returnToBranch(int pat[][COUNT_X], POS *me, POS *route, int *routeCount)
 {
     if (*routeCount == 1)
         return 0;
@@ -274,7 +274,7 @@ int returnToBranch(int pat[][10], POS *me, POS *route, int *routeCount)
 }
 
 // 自分の位置を更新する
-int updatePosition(int pat[][10], POS *me, POS *route, int* routeCount)
+int updatePosition(int pat[][COUNT_X], POS *me, POS *route, int* routeCount)
 {
        int returnValue = 1;
     POS oldPos = *me;
@@ -330,6 +330,29 @@ void generateRandomMap(int pat[][COUNT_X])
 	pat[0][0] = 0;
     pat[COUNT_Y - 1][COUNT_X - 1] = 0;
 }
+
+void normalizeDensity(int pat[][COUNT_X])
+{
+    int blockSize = 9;
+
+	for(int i=0; i<COUNT_Y-blockSize; i++)
+	    for(int j=0; j<COUNT_X-blockSize; j++)
+        {
+            int sum = 0;
+            for (int k = 0; k < blockSize; k++)
+            {
+                if (pat[i][j + k] == WALL)
+                    sum++;
+                else if (pat[i][j + k] == CLEAR)
+                    sum--;
+            }
+            if (sum >= blockSize*blockSize/3)
+                pat[i + blockSize / 2][j + blockSize / 2] = CLEAR;
+            else if(sum <= -blockSize*blockSize/3)
+                pat[i + blockSize / 2][j + blockSize / 2] = WALL;
+        }
+
+}
 /**
  * \brief 
  * \param hInstance 
@@ -359,8 +382,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     SetMouseDispFlag(TRUE);
 
     Cb = GetColor(0, 0, 255);
-    Cb2 = GetColor(0, 0, 55);
-    Cr2 = GetColor(55, 0, 0);
+    Cb2 = GetColor(0, 255, 255);
+    Cr2 = GetColor(255, 0, 0);
     Cy = GetColor(255, 255, 0);
     Ck = GetColor(0, 0, 0);
 
@@ -368,11 +391,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     double sizeY = (double)WINDOW_SIZE_Y / COUNT_Y;
 
     while (1) {
+        ClearDrawScreen();
         POS me = { 0,0 };
         POS old = { me.x, me.y };
         route[routeCount++] = me; // routeに自分の初期座標を設定し、カウントを一つ増やす
         generateRandomMap(pattern);
-        pattern[me.y][me.x] = 1;
+        normalizeDensity(pattern);
+    	pattern[me.y][me.x] = 1;
 
         while (1)
         {
@@ -383,7 +408,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
             int isSpacekeyPushed = CheckHitKey(KEY_INPUT_SPACE);
 
-            if (isSpacekeyPushed && !spaceKeywasPushed) // スペースキーを押した瞬間
+            //if (isSpacekeyPushed && !spaceKeywasPushed) // スペースキーを押した瞬間
             {
                 if(updatePosition(pattern, &me, route, &routeCount) == 0)
                     break;
@@ -415,11 +440,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                         DrawCircle((x1 + x2) / 2, (y1 + y2) / 2, sizeX / 2 - 2, Ck, TRUE);
                 }
             }
-            //Sleep(10);
+            //Sleep(100);
             ProcessMessage();
             if (me.x == COUNT_X - 1 && me.y == COUNT_Y - 1)
                 break;
         }
+        //WaitKey();
     }
     end:
     WaitKey();
