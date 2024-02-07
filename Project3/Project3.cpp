@@ -321,9 +321,9 @@ void generateRandomMap(int pat[][COUNT_X])
             // 10000までの乱数を発生し、10で割った余りが3以下の時は壁、
             // それより大きいときは通路に設定する
             if (GetRand(10000) % 10 <= 3)
-                pat[i][j] = WALL;
+                pat[j][i] = WALL;
             else
-                pat[i][j] = CLEAR;
+                pat[j][i] = CLEAR;
         }
 
     //スタート地点とゴール地点は必ず通路に設定する。
